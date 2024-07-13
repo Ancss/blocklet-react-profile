@@ -1,0 +1,16 @@
+version: '3'
+services:
+  blocklet-server:
+    container_name: blocklet-server-docker-react-test
+    image: arcblock/blocklet-server-beta:11629-beta-ec04c755
+    user: root
+    ports:
+      - 8882:80
+      - 8445:443
+    volumes:
+      - ./data:/data # 你需要将 blocklet-server 的数据存放在哪儿
+      # - ./.arcblock:/home/arcblock/.arcblock # blocklet-server 的运行数据，这个可以不做映射
+      - ./:/workspace/app # 你需要开发的 blocklet 目录
+    environment:
+      ABT_NODE_HOST: 192.168.0.120 # 填你主机的 IP
+      ABT_NODE_MAX_CLUSTER_SIZE: 1 # 该配置可以加快 server 的启动时间
