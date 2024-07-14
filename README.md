@@ -30,3 +30,14 @@
 ## 7. 测试
 - 使用 Jest 和 React Testing Library 进行单元测试和集成测试
 
+# ScreenShots
+
+## 1. 未登录 + PAD
+![未登录](./screenshots/3.jpg)
+
+## 2. 已登录 + PC
+![已登录](./screenshots/1.jpg)
+
+## 3. 编辑表单 + Mobile
+![编辑表单](./screenshots/2.jpg)
+
