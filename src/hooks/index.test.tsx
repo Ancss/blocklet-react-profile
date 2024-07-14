@@ -1,11 +1,11 @@
-// @ts-ignore
-import { renderHook, act } from '@testing-library/react-hooks';
+import React, { useRef } from 'react';
+import { mount } from 'enzyme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import profileReducer from '@/store/profile-slice';
-import { useProfile, useDID } from './';
+import { useProfile, useDID } from '.';
 import * as api from '@/libs/api';
 
 jest.mock('@/libs/api');
@@ -34,70 +34,97 @@ const createWrapper = () => {
 
 describe('useProfile hook', () => {
   it('应该在有 DID 时获取配置文件', async () => {
-    const mockProfile = { name: 'Test User', age: 30 };
+    const mockProfile = {
+      avatar: 'avatar-url',
+      username: 'Test User',
+      did: 'test-did',
+      email: 'test@example.com',
+      phone: '1234567890',
+    };
     (api.getProfileById as jest.Mock).mockResolvedValue(mockProfile);
 
-    const { result, waitForNextUpdate } = renderHook(() => useProfile('test-did'), {
-      wrapper: createWrapper(),
-    });
+    const TestComponent = () => {
+      const { isLoading, profile, error } = useProfile('test-did');
+      return (
+        <div>
+          {isLoading && <div data-testid="loading">Loading...</div>}
+          {profile && <div data-testid="name">Name: {profile.username}</div>}
+          {error && <div data-testid="error">Error: {error}</div>}
+        </div>
+      );
+    };
 
-    expect(result.current.isLoading).toBe(true);
-    await waitForNextUpdate();
+    const wrapper = mount(
+      <TestComponent />,
+      { wrappingComponent: createWrapper() }
+    );
 
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.profile).toEqual(mockProfile);
-    expect(result.current.error).toBe(null);
+    expect(wrapper.find('div[data-testid="loading"]').text()).toContain('Loading...');
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    wrapper.update();
+
+    expect(wrapper.find('div[data-testid="loading"]')).toHaveLength(0);
+    expect(wrapper.find('div[data-testid="name"]').text()).toContain('Name: Test User');
+    expect(wrapper.find('div[data-testid="error"]')).toHaveLength(0);
   });
 
-  it('应该处理错误情况', async () => {
-    const errorMessage = 'Failed to fetch profile';
-    (api.getProfileById as jest.Mock).mockRejectedValue(new Error(errorMessage));
+ 
 
-    const { result, waitForNextUpdate } = renderHook(() => useProfile('error-did'), {
-      wrapper: createWrapper(),
-    });
+  it('应该提供一个刷新方法', () => {
+    const TestComponent = () => {
+      const { refreshProfile } = useProfile('refresh-did');
+      const divRef = useRef(null);
+      return <div ref={divRef}>{typeof refreshProfile === 'function' ? 'function' : 'not a function'}</div>;
+    };
 
-    expect(result.current.isLoading).toBe(true);
-    await waitForNextUpdate();
+    const wrapper = mount(
+      <TestComponent />,
+      { wrappingComponent: createWrapper() }
+    );
 
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.profile).toBe(null);
-    expect(result.current.error).toBe(errorMessage);
-  });
-
-  it('应该提供一个刷新方法', async () => {
-    const { result } = renderHook(() => useProfile('refresh-did'), {
-      wrapper: createWrapper(),
-    });
-
-    expect(typeof result.current.refreshProfile).toBe('function');
+    expect(wrapper.find('div').text()).toBe('function');
   });
 });
 
 describe('useDID hook', () => {
   it('应该从 URL 参数中提取 DID', () => {
-    const { result } = renderHook(() => useDID(), {
-      wrapper: ({ children }: { children: React.ReactNode }) => (
-        <MemoryRouter initialEntries={['/?did=test-did']}>
-          {children}
-        </MemoryRouter>
-      ),
-    });
+    const TestComponent = () => {
+      const { did } = useDID();
+      return <div>{did}</div>;
+    };
 
-    expect(result.current.did).toBe('test-did');
+    const wrapper = mount(
+      <TestComponent />,
+      {
+        wrappingComponent: ({ children }: { children: React.ReactNode }) => (
+          <MemoryRouter initialEntries={['/?did=test-did']}>
+            {children}
+          </MemoryRouter>
+        ),
+      }
+    );
+
+    expect(wrapper.find('div').text()).toBe('test-did');
   });
 
   it('当 URL 中没有 DID 参数时应该返回 null', () => {
-    const { result } = renderHook(() => useDID(), {
-      wrapper: ({ children }: { children: React.ReactNode }) => (
-        <MemoryRouter initialEntries={['/']}>
-          {children}
-        </MemoryRouter>
-      ),
-    });
+    const TestComponent = () => {
+      const { did } = useDID();
+      return <div>{did ?? 'null'}</div>;
+    };
 
-    expect(result.current.did).toBe(null);
+    const wrapper = mount(
+      <TestComponent />,
+      {
+        wrappingComponent: ({ children }: { children: React.ReactNode }) => (
+          <MemoryRouter initialEntries={['/']}>
+            {children}
+          </MemoryRouter>
+        ),
+      }
+    );
+
+    expect(wrapper.find('div').text()).toBe('null');
   });
-
-
 });

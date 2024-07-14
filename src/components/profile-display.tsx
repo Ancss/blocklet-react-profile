@@ -221,7 +221,6 @@ function ProfileEdit({ profile, onCancel, onSubmit, isPending }: Props) {
 // Main ProfileComponent
 export default function ProfileComponent() {
   const { did } = useDID()
-
   const { profile, isLoading, error } = useProfile(did);
 
   const [isEditing, setIsEditing] = useState(false);

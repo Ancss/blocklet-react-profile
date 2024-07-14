@@ -13,6 +13,7 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
 
 export const useProfile = (did: string | null) => {
+  console.log('did', did);
   const queryClient = useQueryClient();
 
   const dispatch = useDispatch();
@@ -20,7 +21,7 @@ export const useProfile = (did: string | null) => {
 
   const { isLoading, error, data } = useQuery({
     queryKey: ['profile'],
-    queryFn: () => did ? getProfileById(did) : null,
+    queryFn: () => did ? getProfileById(did) : Promise.resolve(null),
     enabled: !!did && !profileState.data,
   });
   useEffect(() => {
@@ -37,6 +38,7 @@ export const useProfile = (did: string | null) => {
   const refreshProfile = () => {
     queryClient.invalidateQueries({ queryKey: ['profile'] });
   };
+
   return {
     profile: profileState.data,
     isLoading,

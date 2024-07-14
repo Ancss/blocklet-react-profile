@@ -17,11 +17,11 @@ const profileSlice = createSlice({
   name: 'profile',
   initialState,
   reducers: {
-    setProfile: (state, action: PayloadAction<Profile>) => {
+    setProfile: (state, action: PayloadAction<Profile|null>) => {
       state.data = action.payload;
       state.status = 'succeeded';
     },
-    setError: (state, action: PayloadAction<string>) => {
+    setError: (state, action: PayloadAction<string|null>) => {
       state.error = action.payload;
       state.status = 'failed';
     },
